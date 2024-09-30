@@ -1,4 +1,3 @@
-
 #![no_std]
 #![no_main]
 #![feature(custom_test_frameworks)]
@@ -12,9 +11,15 @@ use free_os::println;
 pub extern "C" fn _start() -> ! {
     println!("Hello World{}", "!");
 
+    free_os::init();
+
+    // invoke a breakpoint for testing
+    x86_64::instructions::interrupts::int3();
+
     #[cfg(test)]
     test_main();
 
+    println!("It did not crash!");
     loop {}
 }
 
