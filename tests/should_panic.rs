@@ -5,13 +5,12 @@
 #![reexport_test_harness_main = "test_main"]
 
 use core::panic::PanicInfo;
-use free_os::{QemuExitCode,exit_qemu,serial_println};
-
+use free_os::{exit_qemu, serial_println, QemuExitCode};
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     test_main();
-    loop{}
+    loop {}
 }
 
 pub fn test_runner(tests: &[&dyn Fn()]) {
@@ -36,6 +35,5 @@ use free_os::serial_print;
 #[test_case]
 fn should_fail() {
     serial_print!("should_panic::should_fail...\t");
-    assert_eq!(0,1);
+    assert_eq!(0, 1);
 }
-

@@ -1,5 +1,3 @@
-
-
 use core::fmt;
 use volatile::Volatile;
 
@@ -25,14 +23,13 @@ pub enum Color {
     White = 15,
 }
 
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(transparent)]
 struct ColorCode(u8);
 
 impl ColorCode {
     fn new(foreground: Color, background: Color) -> Self {
-        Self((background as u8) << 4  | (foreground as u8))
+        Self((background as u8) << 4 | (foreground as u8))
     }
 }
 
@@ -40,7 +37,7 @@ impl ColorCode {
 #[repr(C)]
 struct ScreenChar {
     ascii_character: u8,
-    color_code: ColorCode
+    color_code: ColorCode,
 }
 
 const BUFFER_HEIGHT: usize = 25;
@@ -48,16 +45,14 @@ const BUFFER_WIDTH: usize = 80;
 
 #[repr(transparent)]
 struct Buffer {
-    chars: [[Volatile<ScreenChar>; BUFFER_WIDTH]; BUFFER_HEIGHT]
+    chars: [[Volatile<ScreenChar>; BUFFER_WIDTH]; BUFFER_HEIGHT],
 }
-
 
 pub struct Writer {
     column_position: usize,
     color_code: ColorCode,
     buffer: &'static mut Buffer,
 }
-
 
 impl fmt::Write for Writer {
     fn write_str(&mut self, s: &str) -> fmt::Result {
@@ -66,9 +61,8 @@ impl fmt::Write for Writer {
     }
 }
 
-
 impl Writer {
-    pub fn write_byte(&mut self, byte: u8)  {
+    pub fn write_byte(&mut self, byte: u8) {
         match byte {
             b'\n' => self.new_line(),
             byte => {
@@ -89,11 +83,11 @@ impl Writer {
         }
     }
 
-    fn new_line(&mut self) { 
+    fn new_line(&mut self) {
         for i in 1..BUFFER_HEIGHT {
             for j in 0..BUFFER_WIDTH {
                 let character = self.buffer.chars[i][j].read();
-                self.buffer.chars[i-1][j].write(character);
+                self.buffer.chars[i - 1][j].write(character);
             }
         }
         self.clear_row(BUFFER_HEIGHT - 1);
@@ -103,7 +97,7 @@ impl Writer {
     fn clear_row(&mut self, row: usize) {
         let blank = ScreenChar {
             ascii_character: b' ',
-            color_code: self.color_code
+            color_code: self.color_code,
         };
         for j in 0..BUFFER_WIDTH {
             self.buffer.chars[row][j].write(blank);
@@ -118,14 +112,13 @@ impl Writer {
             }
         }
     }
-    
 }
 pub fn print_something() {
     use core::fmt::Write;
     let mut writer = Writer {
         column_position: 0,
         color_code: ColorCode::new(Color::Yellow, Color::Black),
-        buffer: unsafe {&mut *(0xb8000 as *mut Buffer)},
+        buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
     };
     writer.write_byte(b'H');
     writer.write_string("ello ");
@@ -137,15 +130,13 @@ use lazy_static::lazy_static;
 use spin::Mutex;
 
 // A static Writer for the entire program
-lazy_static ! {
+lazy_static! {
     pub static ref WRITER: Mutex<Writer> = Mutex::new(Writer {
         column_position: 0,
         color_code: ColorCode::new(Color::Yellow, Color::Black),
-        buffer: unsafe {&mut *(0xb8000 as *mut Buffer)}
+        buffer: unsafe { &mut *(0xb8000 as *mut Buffer) }
     });
 }
-
-
 
 // macro definitions
 #[macro_export]
@@ -163,5 +154,3 @@ pub fn _print(args: fmt::Arguments) {
     use core::fmt::Write;
     WRITER.lock().write_fmt(args).unwrap();
 }
-
-
